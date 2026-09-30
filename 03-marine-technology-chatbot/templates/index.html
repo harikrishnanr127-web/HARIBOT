@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }} Study Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f2f4fb;
+    --grid: #dfe4f3;
+    --page: #ffffff;
+    --ink: #1b2559;
+    --ink-soft: #55608f;
+    --hl: #ffe45c;
+    --margin: #f08a9b;
+    --line: #e3e7f5;
+    --display: "Bricolage Grotesque", "Segoe UI", sans-serif;
+    --body: "Source Serif 4", Georgia, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #12162e;
+      --grid: #1b2142;
+      --page: #191e3d;
+      --ink: #eef0ff;
+      --ink-soft: #9aa3d1;
+      --hl: #ffe45c;
+      --margin: #c0566b;
+      --line: #262d55;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    color: var(--ink);
+    font-family: var(--body);
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+  }
+  .notebook {
+    width: 100%;
+    max-width: 780px;
+    height: calc(100vh - 40px);
+    height: calc(100dvh - 40px);
+    background: var(--page);
+    border: 2px solid var(--ink);
+    border-radius: 6px 22px 22px 6px;
+    box-shadow: 8px 8px 0 var(--ink);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+  }
+  .notebook::before { /* margin line */
+    content: "";
+    position: absolute;
+    top: 0; bottom: 0; left: 52px;
+    width: 2px;
+    background: var(--margin);
+    opacity: .7;
+    pointer-events: none;
+  }
+  header { padding: 22px 24px 14px 72px; border-bottom: 2px solid var(--ink); }
+  h1 {
+    margin: 0;
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(1.5rem, 4.5vw, 2.2rem);
+    line-height: 1.1;
+    letter-spacing: -.02em;
+  }
+  h1 span {
+    background: linear-gradient(transparent 55%, var(--hl) 55% 92%, transparent 92%);
+    color: var(--ink);
+    padding: 0 4px;
+    margin-left: -4px;
+  }
+  @media (prefers-color-scheme: dark) { h1 span { color: var(--ink); } }
+  header p { margin: 6px 0 0; color: var(--ink-soft); font-size: .95rem; }
+
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px 12px 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    scroll-behavior: smooth;
+  }
+  .msg { max-width: 92%; font-size: 1.05rem; line-height: 1.65; overflow-wrap: anywhere; }
+  .msg.bot { align-self: flex-start; }
+  .msg.user {
+    align-self: flex-end;
+    background: var(--hl);
+    color: #1b2559;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1.45;
+    padding: 9px 14px;
+    border: 2px solid var(--ink);
+    border-radius: 14px 14px 2px 14px;
+    white-space: pre-wrap;
+  }
+  .msg.error { color: #c2334a; font-style: italic; }
+  .msg p { margin: 0 0 .7em; }
+  .msg p:last-child, .msg ul:last-child, .msg ol:last-child { margin-bottom: 0; }
+  .msg ul, .msg ol { margin: 0 0 .7em; padding-left: 1.3em; }
+  .msg code {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: .88em;
+    background: var(--line);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  .msg pre {
+    background: var(--ink);
+    color: var(--page);
+    padding: 12px 14px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 0 0 .7em;
+  }
+  .msg pre code { background: none; padding: 0; color: inherit; }
+  .msg strong { background: linear-gradient(transparent 60%, color-mix(in srgb, var(--hl) 55%, transparent) 60%); }
+
+  .dots { display: inline-flex; gap: 5px; padding: 6px 0; }
+  .dots i {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--ink); opacity: .3;
+    animation: blink 1s infinite;
+  }
+  .dots i:nth-child(2) { animation-delay: .15s; }
+  .dots i:nth-child(3) { animation-delay: .3s; }
+  @keyframes blink { 50% { opacity: 1; transform: translateY(-3px); } }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 24px 10px 72px; }
+  .chips button {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: .88rem;
+    background: transparent;
+    color: var(--ink);
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .chips button:hover { background: var(--hl); color: #1b2559; }
+
+  .composer {
+    display: flex;
+    gap: 10px;
+    padding: 12px 20px 16px 72px;
+    border-top: 2px solid var(--ink);
+    align-items: flex-end;
+  }
+  textarea {
+    flex: 1;
+    resize: none;
+    max-height: 140px;
+    font: inherit;
+    font-size: 1.02rem;
+    line-height: 1.4;
+    color: var(--ink);
+    background: var(--page);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  textarea::placeholder { color: var(--ink-soft); }
+  #send {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 1rem;
+    color: #1b2559;
+    background: var(--hl);
+    border: 2px solid var(--ink);
+    border-radius: 10px;
+    padding: 11px 18px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--ink);
+    transition: transform .1s, box-shadow .1s;
+  }
+  #send:active { transform: translate(3px, 3px); box-shadow: 0 0 0 var(--ink); }
+  #send:disabled { opacity: .5; cursor: not-allowed; }
+  :focus-visible { outline: 3px solid var(--margin); outline-offset: 2px; }
+
+  @media (max-width: 560px) {
+    body { padding: 0; }
+    .notebook { height: 100dvh; border-radius: 0; border-width: 0; box-shadow: none; }
+    .notebook::before { left: 22px; }
+    header, #log, .chips, .composer { padding-left: 40px; padding-right: 14px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  }
+</style>
+</head>
+<body>
+<main class="notebook">
+  <header>
+    <h1><span>{{ title }}</span></h1>
+    <p>Your study assistant. Ask about this subject only.</p>
+  </header>
+
+  <section id="log" aria-live="polite"></section>
+
+  <div class="chips" id="chips">
+    <button type="button">Explain a topic simply</button>
+    <button type="button">Give me a practice question</button>
+    <button type="button">Make a 7-day revision plan</button>
+  </div>
+
+  <div class="composer">
+    <textarea id="input" rows="1" maxlength="2000" placeholder="Type your doubt here" aria-label="Your question"></textarea>
+    <button id="send" type="button">Ask</button>
+  </div>
+</main>
+
+<script>
+  const log = document.getElementById("log");
+  const input = document.getElementById("input");
+  const sendBtn = document.getElementById("send");
+  const chips = document.getElementById("chips");
+  const history = [];
+  let busy = false;
+
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  function inline(s) {
+    return esc(s)
+      .replace(/`([^`]+)`/g, "<code>$1</code>")
+      .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+      .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+  }
+
+  function markdown(text) {
+    const parts = text.split(/```/);
+    return parts.map((chunk, i) => {
+      if (i % 2) {
+        const code = chunk.replace(/^[^\n]*\n/, "");
+        return "<pre><code>" + esc(code.replace(/\n$/, "")) + "</code></pre>";
+      }
+      let html = "", list = null;
+      const close = () => { if (list) { html += "</" + list + ">"; list = null; } };
+      chunk.split("\n").forEach(line => {
+        const ul = line.match(/^\s*[-*]\s+(.*)/);
+        const ol = line.match(/^\s*\d+[.)]\s+(.*)/);
+        if (ul || ol) {
+          const tag = ul ? "ul" : "ol";
+          if (list !== tag) { close(); html += "<" + tag + ">"; list = tag; }
+          html += "<li>" + inline((ul || ol)[1]) + "</li>";
+        } else {
+          close();
+          if (line.trim()) html += "<p>" + inline(line.replace(/^#+\s*/, "")) + "</p>";
+        }
+      });
+      close();
+      return html;
+    }).join("");
+  }
+
+  function add(role, content, isError) {
+    const el = document.createElement("div");
+    el.className = "msg " + role + (isError ? " error" : "");
+    if (role === "bot" && !isError) el.innerHTML = markdown(content);
+    else el.textContent = content;
+    log.appendChild(el);
+    log.scrollTop = log.scrollHeight;
+    return el;
+  }
+
+  async function send(text) {
+    text = (text ?? input.value).trim();
+    if (!text || busy) return;
+    busy = true;
+    sendBtn.disabled = true;
+    chips.hidden = true;
+    input.value = "";
+    input.style.height = "auto";
+
+    add("user", text);
+    const wait = add("bot", "");
+    wait.innerHTML = '<span class="dots"><i></i><i></i><i></i></span>';
+
+    try {
+      const res = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, history })
+      });
+      const data = await res.json();
+      wait.remove();
+      if (!res.ok) throw new Error(data.error || "Something went wrong.");
+      history.push({ role: "user", text }, { role: "model", text: data.reply });
+      add("bot", data.reply);
+    } catch (err) {
+      wait.remove();
+      add("bot", err.message + " Check your connection and ask again.", true);
+    } finally {
+      busy = false;
+      sendBtn.disabled = false;
+      input.focus();
+    }
+  }
+
+  add("bot", {{ welcome | tojson }});
+  sendBtn.addEventListener("click", () => send());
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }
+  });
+  input.addEventListener("input", () => {
+    input.style.height = "auto";
+    input.style.height = Math.min(input.scrollHeight, 140) + "px";
+  });
+  chips.querySelectorAll("button").forEach(b => b.addEventListener("click", () => send(b.textContent)));
+</script>
+</body>
+</html>
